@@ -2,6 +2,7 @@ import dao.UserDao;
 import dao.UserDaoImpl;
 import entity.User;
 import org.hibernate.SessionFactory;
+import service.UserService;
 import util.HibernateUtil;
 
 import java.util.Scanner;
@@ -11,6 +12,7 @@ public class App {
         Scanner scanner = new Scanner(System.in);
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
         UserDao userDao = new UserDaoImpl(sessionFactory);
+        UserService userService = new UserService(userDao);
         while (true) {
             System.out.println("=== Меню ===");
             System.out.println("1. Добавить пользователя");
@@ -28,14 +30,14 @@ public class App {
                     System.out.print("Введите возраст: "); int age = scanner.nextInt(); scanner.nextLine();
                     User user = new User();
                     user.setName(name); user.setEmail(email); user.setAge(age);
-                    Long id = userDao.add(user);
+                    Long id = userService.addUser(user);
                     System.out.println("Пользователь добавлен с ID: " + id);
                     break;
                 case 2:
                     System.out.print("Введите ID пользователя: ");
                     int searchId = scanner.nextInt();
                     scanner.nextLine();
-                    User foundUser = userDao.findById(searchId);
+                    User foundUser = userService.getUser((long) searchId);
                     if (foundUser != null) {
                         System.out.println("Найден: " + foundUser.getName() + ", Email: " + foundUser.getEmail() + ", Возраст: " + foundUser.getAge());
                     } else {
@@ -46,7 +48,7 @@ public class App {
                     System.out.print("Введите ID пользователя: ");
                     searchId = scanner.nextInt();
                     scanner.nextLine();
-                    foundUser = userDao.findById(searchId);
+                    foundUser = userService.getUser((long) searchId);
                     if (foundUser != null) {
                         System.out.print("Введите имя: "); name = scanner.nextLine();
                         System.out.print("Введите email: "); email = scanner.nextLine();
@@ -54,7 +56,7 @@ public class App {
                         foundUser.setName(name);
                         foundUser.setEmail(email);
                         foundUser.setAge(age);
-                        userDao.update(foundUser);
+                        userService.updateUserData(foundUser);
                         System.out.println("Пользователь с ID: " + searchId +" изменен");} else {
                         System.out.println("Пользователь с таким ID не найден");
                     }
@@ -62,9 +64,9 @@ public class App {
                 case 4:
                     System.out.print("Введите ID для удаления: ");
                     int deleteId = scanner.nextInt(); scanner.nextLine();
-                    foundUser = userDao.findById(deleteId);
+                    foundUser = userService.getUser((long) deleteId);
                     if (foundUser != null) {
-                        userDao.deleteUser(deleteId);
+                        userService.removeUser((long) deleteId);
                         System.out.println("Пользователь с ID: " + deleteId +" удален");
                     } else {
                         System.out.println("Пользователь с таким ID не найден");
