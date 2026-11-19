@@ -1,4 +1,4 @@
-package entity;
+package Application.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
