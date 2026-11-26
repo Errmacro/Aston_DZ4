@@ -1,74 +1,60 @@
 package Application.service;
 
-import Application.dto.UserDto;
+import Application.dto.UserCreateDto;
+import Application.dto.UserResponseDto;
+import Application.dto.UserUpdateDto;
 import Application.entity.User;
+import Application.mappers.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import Application.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
+@Transactional
 public class UserService {
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, UserMapper userMapper) {
         this.userRepository = userRepository;
+        this.userMapper = userMapper;
     }
 
-    private User toEntity(UserDto dto) {
-        User entity = new User();
-        entity.setName(dto.getName());
-        entity.setEmail(dto.getEmail());
-        entity.setAge(dto.getAge());
-        return entity; }
-
-    private UserDto toDto(User entity) {
-        UserDto dto = new UserDto();
-        dto.setId(entity.getId());
-        dto.setName(entity.getName());
-        dto.setEmail(entity.getEmail());
-        dto.setAge(entity.getAge()); return dto; }
-
-    public List<UserDto> getAllUsers() {
-        return userRepository.findAll().stream().map(this::toDto).toList();
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(userMapper::toDto)
+                .toList();
     }
 
-    public UserDto addUser(UserDto userDto) {
-        if (userDto == null || userDto.getName() == null || userDto.getName().isBlank()) {
-            throw new IllegalArgumentException("Некорректные данные пользователя");
-        }
-        User saved = userRepository.save(toEntity(userDto));
-        return toDto(saved);
-    }
-
-    public UserDto getUser(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("ID не может быть null");
-        }
+    @Transactional(readOnly = true)
+    public UserResponseDto getUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Пользователь с ID " + id + " не найден"));
-        return toDto(user);
+        return userMapper.toDto(user);
     }
 
-    public UserDto updateUserData(Long id, UserDto userDto){
-        if (id == null || userDto.getName() == null || userDto.getName().isBlank()) {
-            throw new IllegalArgumentException("Некорректные данные пользователя");
-        }
+
+    public UserResponseDto addUser(UserCreateDto dto) {
+        User saved = userRepository.save(userMapper.toEntity(dto));
+        return userMapper.toDto(saved);
+    }
+
+    public UserResponseDto updateUserData(Long id, UserUpdateDto dto) {
         User existing = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Пользователь с ID " + id + " не найден"));
-        existing.setName(userDto.getName());
-        existing.setEmail(userDto.getEmail());
-        existing.setAge(userDto.getAge());
-        User updated = userRepository.save(existing);
-        return toDto(updated);
+        userMapper.updateEntity(existing, dto);
+        return userMapper.toDto(userRepository.save(existing));
     }
 
     public void removeUser(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("Пользователя с таким id не существует");
+        if (!userRepository.existsById(id)) {
+            throw new NoSuchElementException("Пользователь с ID " + id + " не найден");
         }
         userRepository.deleteById(id);
     }

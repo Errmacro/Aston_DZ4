@@ -1,6 +1,10 @@
 package Application.controller;
 
-import Application.dto.UserDto;
+import Application.dto.UserCreateDto;
+import Application.dto.UserResponseDto;
+import Application.dto.UserUpdateDto;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import Application.service.UserService;
 
@@ -16,27 +20,29 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping public List<UserDto> getAllUsers() {
-        return (List<UserDto>) userService.getAllUsers();
+    @GetMapping public List<UserResponseDto> getAllUsers() {
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public UserDto getUserById(@PathVariable Long id) {
+    public UserResponseDto getUserById(@PathVariable Long id) {
         return userService.getUser(id);
     }
 
     @PostMapping
-    public UserDto createUser(@RequestBody UserDto user) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponseDto createUser(@Valid @RequestBody UserCreateDto user) {
         return userService.addUser(user);
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long id) {
         userService.removeUser(id);
     }
 
     @PutMapping("/{id}")
-    public UserDto updateUser(@PathVariable Long id, @RequestBody UserDto user) {
+    public UserResponseDto updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDto user) {
         return userService.updateUserData(id, user);
     }
 }
